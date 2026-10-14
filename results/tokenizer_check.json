@@ -1,0 +1,38 @@
+{
+  "ai4bharat/IndicBERTv2-MLM-only": {
+    "tokenizer_class": "TokenizersBackend",
+    "vocab_size": 250000,
+    "token_counts": [
+      13,
+      10,
+      20,
+      16,
+      21
+    ],
+    "mean_tokens": 16.0
+  },
+  "google/muril-base-cased": {
+    "tokenizer_class": "BertTokenizer",
+    "vocab_size": 197258,
+    "token_counts": [
+      17,
+      11,
+      25,
+      18,
+      22
+    ],
+    "mean_tokens": 18.6
+  },
+  "xlm-roberta-base": {
+    "tokenizer_class": "XLMRobertaTokenizer",
+    "vocab_size": 250002,
+    "token_counts": [
+      17,
+      15,
+      25,
+      23,
+      30
+    ],
+    "mean_tokens": 22.0
+  }
+}

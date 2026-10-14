@@ -1,0 +1,22 @@
+{
+  "dataset": "mounikaiiith/Telugu_Sentiment",
+  "rows_raw": 35142,
+  "empty_or_null_removed": 0,
+  "exact_duplicates_removed": 143,
+  "near_duplicate_groups": 518,
+  "near_duplicates_removed": 538,
+  "shingle_size": 5,
+  "jaccard_threshold": 0.8,
+  "rows_final": 34461,
+  "split_sizes": {
+    "train": 24123,
+    "validation": 5169,
+    "test": 5169
+  },
+  "split_ratios": [
+    0.7,
+    0.15,
+    0.15
+  ],
+  "seed": 42
+}

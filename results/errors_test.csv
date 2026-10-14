@@ -1,0 +1,3 @@
+text,true_label,predicted_label,confidence,my_error_category
+చెడు వార్త,neg,neutral,0.4,
+గెలుపు,pos,neg,0.3,

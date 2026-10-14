@@ -1,0 +1,28 @@
+# Telugu Text Classifier — Phase 1 configuration
+
+dataset:
+  name: mounikaiiith/Telugu_Sentiment
+  text_column: Sentence
+  label_column: Sentiment
+
+# Fixed class order: label ids are indices into this list
+labels: [neg, neutral, pos]
+
+# Reproducibility: every random operation seeds from here
+seed: 42
+
+splits:
+  train: 0.70
+  validation: 0.15
+  test: 0.15
+
+dedup:
+  # Near-duplicate detection: character shingles, Jaccard >= threshold counts as duplicate
+  shingle_size: 5
+  jaccard_threshold: 0.8
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  results: results
+  reports: reports

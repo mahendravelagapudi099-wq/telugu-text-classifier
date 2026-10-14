@@ -1,0 +1,20 @@
+# Virtual environments
+.venv/
+
+# Python artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Data (too large / regenerable via scripts/prepare_data.py)
+data/
+
+# Saved model binaries (regenerable via scripts/train_baseline.py; metrics stay tracked)
+*.joblib
+
+# Editor session artifacts
+.zcode/
+
+# OS
+Thumbs.db
+.DS_Store

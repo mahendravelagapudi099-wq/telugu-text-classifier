@@ -1,0 +1,256 @@
+{
+  "dataset": "mounikaiiith/Telugu_Sentiment",
+  "seed": 42,
+  "best": {
+    "variant": "char",
+    "ngram_range": [
+      2,
+      5
+    ],
+    "min_df": 1,
+    "C": 4.0,
+    "val_macro_f1": 0.6519793054079224
+  },
+  "all_results": [
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        5
+      ],
+      "min_df": 1,
+      "C": 4.0,
+      "val_macro_f1": 0.6519793054079224
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        5
+      ],
+      "min_df": 1,
+      "C": 1.0,
+      "val_macro_f1": 0.6424858162353252
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        5
+      ],
+      "min_df": 5,
+      "C": 4.0,
+      "val_macro_f1": 0.6417436999640578
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        4
+      ],
+      "min_df": 1,
+      "C": 4.0,
+      "val_macro_f1": 0.641037791528987
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        5
+      ],
+      "min_df": 5,
+      "C": 1.0,
+      "val_macro_f1": 0.6407520784068447
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        5
+      ],
+      "min_df": 1,
+      "C": 0.5,
+      "val_macro_f1": 0.6399109617737434
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        5
+      ],
+      "min_df": 5,
+      "C": 0.5,
+      "val_macro_f1": 0.6397611271616491
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        4
+      ],
+      "min_df": 5,
+      "C": 4.0,
+      "val_macro_f1": 0.6396402954277742
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        4
+      ],
+      "min_df": 1,
+      "C": 1.0,
+      "val_macro_f1": 0.6347971865481328
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        4
+      ],
+      "min_df": 5,
+      "C": 1.0,
+      "val_macro_f1": 0.6320809267926407
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        4
+      ],
+      "min_df": 1,
+      "C": 0.5,
+      "val_macro_f1": 0.6301675529641769
+    },
+    {
+      "variant": "char",
+      "ngram_range": [
+        2,
+        4
+      ],
+      "min_df": 5,
+      "C": 0.5,
+      "val_macro_f1": 0.6301306450024469
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 1,
+      "C": 1.0,
+      "val_macro_f1": 0.5264506842489014
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 1,
+      "C": 0.5,
+      "val_macro_f1": 0.524228692662031
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 1,
+      "C": 4.0,
+      "val_macro_f1": 0.523750455739092
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 5,
+      "C": 1.0,
+      "val_macro_f1": 0.5165485251934215
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 5,
+      "C": 0.5,
+      "val_macro_f1": 0.5139527114746355
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 5,
+      "C": 4.0,
+      "val_macro_f1": 0.5062670018608594
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        1
+      ],
+      "min_df": 1,
+      "C": 1.0,
+      "val_macro_f1": 0.4962255261840341
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        1
+      ],
+      "min_df": 1,
+      "C": 0.5,
+      "val_macro_f1": 0.49489294583067434
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        1
+      ],
+      "min_df": 1,
+      "C": 4.0,
+      "val_macro_f1": 0.4939234708681381
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        1
+      ],
+      "min_df": 5,
+      "C": 1.0,
+      "val_macro_f1": 0.4926184502348709
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        1
+      ],
+      "min_df": 5,
+      "C": 0.5,
+      "val_macro_f1": 0.4922314142270974
+    },
+    {
+      "variant": "word",
+      "ngram_range": [
+        1,
+        1
+      ],
+      "min_df": 5,
+      "C": 4.0,
+      "val_macro_f1": 0.48542511669617183
+    }
+  ]
+}

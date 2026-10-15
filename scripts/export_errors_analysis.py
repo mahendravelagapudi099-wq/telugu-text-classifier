@@ -64,21 +64,22 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     errors = df[df["true_label"] != df["transformer_prediction"]]
-    stratified = (
-        errors.groupby("true_label", group_keys=False)
-        .apply(lambda g: g.sample(n=min(len(g), max(1, round(100 * len(g) / len(errors)))), random_state=cfg["seed"]))
-    )
+    stratified_groups = []
+    for _, group in errors.groupby("true_label"):
+        n_sample = min(len(group), max(1, round(100 * len(group) / len(errors))))
+        stratified_groups.append(group.sample(n=n_sample, random_state=cfg["seed"]))
+    stratified = pd.concat(stratified_groups) if stratified_groups else errors
     if len(stratified) > 100:
         stratified = stratified.sample(n=100, random_state=cfg["seed"])
-    stratified[COLUMNS].assign(my_error_category="").to_csv(out_dir / "100_errors.csv", index=False)
+    stratified.assign(my_error_category="")[COLUMNS].to_csv(out_dir / "100_errors.csv", index=False)
 
     t_right = df[(df["true_label"] == df["transformer_prediction"]) & (df["true_label"] != df["baseline_prediction"])]
-    t_right.sample(n=min(30, len(t_right)), random_state=cfg["seed"])[COLUMNS].assign(
-        my_error_category="").to_csv(out_dir / "transformer_right_baseline_wrong.csv", index=False)
+    t_right.sample(n=min(30, len(t_right)), random_state=cfg["seed"]).assign(
+        my_error_category="")[COLUMNS].to_csv(out_dir / "transformer_right_baseline_wrong.csv", index=False)
 
     b_right = df[(df["true_label"] == df["baseline_prediction"]) & (df["true_label"] != df["transformer_prediction"])]
-    b_right.sample(n=min(30, len(b_right)), random_state=cfg["seed"])[COLUMNS].assign(
-        my_error_category="").to_csv(out_dir / "baseline_right_transformer_wrong.csv", index=False)
+    b_right.sample(n=min(30, len(b_right)), random_state=cfg["seed"]).assign(
+        my_error_category="")[COLUMNS].to_csv(out_dir / "baseline_right_transformer_wrong.csv", index=False)
 
     print(f"wrote {out_dir}/100_errors.csv ({len(stratified)} rows), "
           f"transformer_right_baseline_wrong.csv ({min(30, len(t_right))}), "

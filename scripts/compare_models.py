@@ -87,6 +87,8 @@ def main() -> None:
     labels: list[str] = cfg["labels"]
     results_dir = Path(cfg["paths"]["results"])
     reports_dir = Path(cfg["paths"]["reports"])
+    results_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir.mkdir(parents=True, exist_ok=True)
 
     baseline_metrics = json.loads((results_dir / "baseline_metrics.json").read_text(encoding="utf-8"))
     transformer_metrics = {

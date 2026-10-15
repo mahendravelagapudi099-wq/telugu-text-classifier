@@ -46,10 +46,16 @@ class TeluguSentimentPredictor:
         checkpoint_dir = None
         if model_path:
             p = Path(model_path)
-            if p.exists():
+            if p.is_file() and p.suffix == ".joblib":
+                import joblib
+                self.baseline_model = joblib.load(p)
+                self.model_type = "baseline"
+                self.model_name = "TF-IDF + LogisticRegression"
+                checkpoint_dir = None
+            elif p.is_dir() and (p / "config.json").exists():
                 checkpoint_dir = p
         
-        if checkpoint_dir is None:
+        if checkpoint_dir is None and self.baseline_model is None:
             candidates = [
                 project_root / "outputs/IndicBERTv2-MLM-only_seed123/best_model",
                 project_root / "outputs/IndicBERTv2-MLM-only_seed42/best_model",

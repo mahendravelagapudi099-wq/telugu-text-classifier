@@ -26,3 +26,23 @@ paths:
   processed: data/processed
   results: results
   reports: reports
+  outputs: outputs
+
+# Phase 2: transformer fine-tuning defaults (scripts/train_transformer.py)
+training:
+  # Max sequence length 64: on the XLM-R tokenizer (the least efficient of
+  # the three), train-split token lengths are p50=24, p95=52, p99=75 — so 64
+  # covers ~98% of examples while keeping batches small.
+  max_length: 64
+  learning_rate: 2e-5
+  epochs: 3
+  batch_size: 32
+  gradient_accumulation_steps: 1
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  early_stopping_patience: 2
+  seeds: [42, 7, 123]
+  models:
+    - ai4bharat/IndicBERTv2-MLM-only
+    - google/muril-base-cased
+    - xlm-roberta-base

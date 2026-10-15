@@ -12,6 +12,9 @@ data/
 # Saved model binaries (regenerable via scripts/train_baseline.py; metrics stay tracked)
 *.joblib
 
+# Transformer checkpoints / training outputs (large; keep only run_summary.json via results/runs/)
+outputs/
+
 # Editor session artifacts
 .zcode/
 

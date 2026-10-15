@@ -41,7 +41,7 @@ from src.utils import load_config
 def compute_class_weights(labels: list[str], counts: dict[str, int]) -> torch.Tensor:
     """Inverse-frequency class weights: n_total / (n_classes * n_class)."""
     n_total = sum(counts.values())
-    weights = [n_total / (len(labels) * counts[label]) for label in labels]
+    weights = [n_total / (len(labels) * max(counts[label], 1)) for label in labels]
     return torch.tensor(weights, dtype=torch.float32)
 
 
@@ -133,17 +133,17 @@ def main() -> None:
             padding="max_length",
         )
 
-    train_ds = Dataset.from_pandas(train_df)
-    val_ds = Dataset.from_pandas(val_df)
+    # Integer labels are set in pandas BEFORE building the Dataset: a
+    # datasets map that overwrites an existing string column casts the new
+    # values back to the string dtype, which silently drops labels later.
+    def to_dataset(df: pd.DataFrame) -> Dataset:
+        prepared = df[["text", "label"]].copy()
+        prepared["labels"] = prepared["label"].map(label2id)
+        ds = Dataset.from_pandas(prepared[["text", "labels"]], preserve_index=False)
+        return ds.map(tokenize_fn, batched=True)
 
-    train_ds = train_ds.map(tokenize_fn, batched=True)
-    val_ds = val_ds.map(tokenize_fn, batched=True)
-
-    train_ds = train_ds.rename_column("label", "labels")
-    val_ds = val_ds.rename_column("label", "labels")
-
-    train_ds = train_ds.map(lambda x: {"labels": label2id[x["labels"]]})
-    val_ds = val_ds.map(lambda x: {"labels": label2id[x["labels"]]})
+    train_ds = to_dataset(train_df)
+    val_ds = to_dataset(val_df)
 
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model, num_labels=len(cfg["labels"]), id2label=id2label, label2id=label2id
@@ -154,11 +154,15 @@ def main() -> None:
     class_weights = compute_class_weights(cfg["labels"], {cfg["labels"][k]: v for k, v in counts.items()})
 
     def compute_metrics(eval_pred):
-        logits, labels = eval_pred
+        logits, labels = eval_pred.predictions, eval_pred.label_ids
         preds = logits.argmax(axis=-1)
         macro_f1 = float(f1_score(labels, preds, average="macro", zero_division=0))
         accuracy = float((preds == labels).mean())
         return {"macro_f1": macro_f1, "accuracy": accuracy}
+
+    # transformers 5 removed warmup_ratio; derive integer steps from the ratio.
+    steps_per_epoch = -(-len(train_ds) // args.batch_size)
+    warmup_steps = int(cfg["training"]["warmup_ratio"] * steps_per_epoch * args.epochs)
 
     training_args = TrainingArguments(
         output_dir=str(output_dir),
@@ -167,7 +171,7 @@ def main() -> None:
         per_device_eval_batch_size=args.batch_size,
         num_train_epochs=args.epochs,
         weight_decay=cfg["training"]["weight_decay"],
-        warmup_ratio=cfg["training"]["warmup_ratio"],
+        warmup_steps=warmup_steps,
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,

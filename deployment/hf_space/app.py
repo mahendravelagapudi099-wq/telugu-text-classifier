@@ -29,18 +29,35 @@ _model = None
 _baseline_pipeline = None
 
 
+def get_model_source():
+    if "HF_MODEL_ID" in os.environ:
+        return os.environ["HF_MODEL_ID"]
+    candidates = [
+        Path("best_model"),
+        Path("outputs/IndicBERTv2-MLM-only_seed42/best_model"),
+        Path("../../outputs/IndicBERTv2-MLM-only_seed42/best_model"),
+        Path("outputs/IndicBERTv2-MLM-only_seed123/best_model"),
+        Path("../../outputs/IndicBERTv2-MLM-only_seed123/best_model"),
+    ]
+    for c in candidates:
+        if c.exists() and (c / "config.json").exists():
+            return str(c)
+    return "ai4bharat/IndicBERTv2-MLM-only"
+
+
 def get_transformer():
     global _tokenizer, _model
     if _model is None:
         from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-        _tokenizer = AutoTokenizer.from_pretrained(DEFAULT_MODEL_ID)
+        model_source = get_model_source()
+        _tokenizer = AutoTokenizer.from_pretrained(model_source)
         try:
-            _model = AutoModelForSequenceClassification.from_pretrained(DEFAULT_MODEL_ID)
+            _model = AutoModelForSequenceClassification.from_pretrained(model_source)
         except Exception:
-            # If default hub model lacks custom classifier head, initialize with 3 classes
+            # If base hub model lacks custom classifier head, initialize with 3 classes
             _model = AutoModelForSequenceClassification.from_pretrained(
-                DEFAULT_MODEL_ID, num_labels=3
+                model_source, num_labels=3
             )
         _model.eval()
     return _tokenizer, _model

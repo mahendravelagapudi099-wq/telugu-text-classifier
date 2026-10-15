@@ -32,16 +32,18 @@ _baseline_pipeline = None
 def get_model_source():
     if "HF_MODEL_ID" in os.environ:
         return os.environ["HF_MODEL_ID"]
+    project_root = Path(__file__).resolve().parents[2]
+    local_dir = Path(__file__).resolve().parent
     candidates = [
+        local_dir / "best_model",
+        project_root / "outputs/IndicBERTv2-MLM-only_seed42/best_model",
+        project_root / "outputs/IndicBERTv2-MLM-only_seed123/best_model",
         Path("best_model"),
         Path("outputs/IndicBERTv2-MLM-only_seed42/best_model"),
-        Path("../../outputs/IndicBERTv2-MLM-only_seed42/best_model"),
-        Path("outputs/IndicBERTv2-MLM-only_seed123/best_model"),
-        Path("../../outputs/IndicBERTv2-MLM-only_seed123/best_model"),
     ]
     for c in candidates:
         if c.exists() and (c / "config.json").exists():
-            return str(c)
+            return str(c.resolve())
     return "ai4bharat/IndicBERTv2-MLM-only"
 
 
@@ -66,13 +68,20 @@ def get_transformer():
 def get_baseline():
     global _baseline_pipeline
     if _baseline_pipeline is None:
-        p = Path("baseline_model.joblib")
-        if not p.exists():
-            p = Path("results/baseline_model.joblib")
-        if p.exists():
-            import joblib
+        project_root = Path(__file__).resolve().parents[2]
+        local_dir = Path(__file__).resolve().parent
+        candidates = [
+            local_dir / "baseline_model.joblib",
+            project_root / "results/baseline_model.joblib",
+            Path("baseline_model.joblib"),
+            Path("results/baseline_model.joblib"),
+        ]
+        for p in candidates:
+            if p.exists():
+                import joblib
 
-            _baseline_pipeline = joblib.load(p)
+                _baseline_pipeline = joblib.load(p)
+                break
     return _baseline_pipeline
 
 

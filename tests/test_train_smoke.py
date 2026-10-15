@@ -71,12 +71,13 @@ def test_training_smoke_run_saves_and_reloads_checkpoint(tmp_path) -> None:
 
     checkpoint_dirs = [d for d in run_dir.glob("checkpoint-*") if d.is_dir()]
     assert checkpoint_dirs, "no checkpoint saved"
+    assert (run_dir / "best_model").is_dir(), "best_model directory was not saved"
 
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(str(run_dir / "best_model"))
     reloaded = AutoModelForSequenceClassification.from_pretrained(
-        sorted(checkpoint_dirs)[-1]
+        str(run_dir / "best_model")
     )
     import torch
 

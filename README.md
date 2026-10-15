@@ -81,3 +81,7 @@ tests/                  # pytest suite (cleaning, dedup/leakage, splits, metrics
 data/                   # gitignored; regenerate via scripts/prepare_data.py
 results/, reports/      # metrics, model artifacts, data report
 ```
+
+
+## update the progress.md after evry phase completion 
+

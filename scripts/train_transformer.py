@@ -200,12 +200,18 @@ def main() -> None:
 
     eval_results = trainer.evaluate()
 
+    # Save the best model and tokenizer for evaluation and downstream deployment
+    best_model_dir = output_dir / "best_model"
+    trainer.save_model(str(best_model_dir))
+    tokenizer.save_pretrained(str(best_model_dir))
+
     plot_loss_curves(trainer.state.log_history, output_dir / "loss_curves.png")
 
     summary = {
         "model": args.model,
         "seed": args.seed,
         "learning_rate": args.lr,
+        "lr": args.lr,
         "epochs_trained": float(trainer.state.epoch),
         "training_seconds": training_seconds,
         "best_val_macro_f1": eval_results.get("eval_macro_f1"),

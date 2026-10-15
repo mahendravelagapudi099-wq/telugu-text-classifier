@@ -67,14 +67,27 @@ def paired_bootstrap_delta(
     """95% CI for macro-F1(A) - macro-F1(B) over resampled test indices."""
     rng = np.random.default_rng(seed)
     n = len(y_true)
+    label2id = {lbl: i for i, lbl in enumerate(labels)}
+    num_classes = len(labels)
+    y_arr = np.array([label2id[y] for y in y_true], dtype=np.int32)
+    a_arr = np.array([label2id[p] for p in preds_a], dtype=np.int32)
+    b_arr = np.array([label2id[p] for p in preds_b], dtype=np.int32)
+
+    def fast_macro_f1(y: np.ndarray, pred: np.ndarray) -> float:
+        cm = np.bincount(y * num_classes + pred, minlength=num_classes * num_classes).reshape(num_classes, num_classes)
+        tp = np.diag(cm)
+        fp = cm.sum(axis=0) - tp
+        fn = cm.sum(axis=1) - tp
+        denom = 2 * tp + fp + fn
+        f1s = np.zeros(num_classes)
+        mask = denom > 0
+        f1s[mask] = 2 * tp[mask] / denom[mask]
+        return float(np.mean(f1s))
+
     deltas = np.empty(n_resamples)
     for i in range(n_resamples):
         idx = rng.integers(0, n, size=n)
-        t = [y_true[j] for j in idx]
-        deltas[i] = (
-            f1_score(t, [preds_a[j] for j in idx], labels=labels, average="macro", zero_division=0)
-            - f1_score(t, [preds_b[j] for j in idx], labels=labels, average="macro", zero_division=0)
-        )
+        deltas[i] = fast_macro_f1(y_arr[idx], a_arr[idx]) - fast_macro_f1(y_arr[idx], b_arr[idx])
     return float(np.percentile(deltas, 2.5)), float(np.percentile(deltas, 97.5))
 
 

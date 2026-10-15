@@ -17,8 +17,41 @@ outputs/
 
 # Editor session artifacts
 .zcode/
+.vscode/
+.idea/
 
 # OS
 Thumbs.db
 .DS_Store
 *.zip
+
+# Local non-committed directory
+local/
+
+# Agents & local tooling (skills-lock.json remains tracked)
+.agents/
+
+# Secrets & credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# Logs & temp files
+*.log
+tmp/
+temp/
+
+# Personal drafts & AI helper files
+drafts/
+ai-notes/
+LINKEDIN*.md
+HOW_TO_USE*.md
+PROMPT*.md
+chat-export*
+
+# Scratch evaluation & tokenizer checks
+results/_*
+results/tokenizer_check.json

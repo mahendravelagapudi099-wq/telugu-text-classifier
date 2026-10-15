@@ -53,13 +53,19 @@ def main() -> None:
     plot_confusion_matrix(
         test["confusion_matrix"], labels, results_dir / "confusion_matrix_test.png"
     )
+    test_df = pd.read_csv(processed / "test.csv")
     export_errors(
-        pd.read_csv(processed / "test.csv")["text"].tolist(),
-        pd.read_csv(processed / "test.csv")["label"].tolist(),
+        test_df["text"].tolist(),
+        test_df["label"].tolist(),
         test["predictions"],
         test["confidence"],
         results_dir / "errors_test.csv",
     )
+    # Full predictions: needed for paired bootstrap against transformer models
+    pd.DataFrame(
+        {"text": test_df["text"], "true_label": test_df["label"],
+         "predicted_label": test["predictions"], "confidence": test["confidence"]}
+    ).to_csv(results_dir / "baseline_test_predictions.csv", index=False)
 
     serializable = {
         split: {k: v for k, v in out.items() if k not in ("predictions", "confidence")}

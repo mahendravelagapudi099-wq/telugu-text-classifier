@@ -79,6 +79,11 @@ def main() -> None:
         test_df["text"].tolist(), y_true, predictions, confidences,
         results_dir / f"errors_{args.name}_test.csv",
     )
+    # Full predictions: needed for paired bootstrap against the baseline
+    pd.DataFrame(
+        {"text": test_df["text"], "true_label": y_true,
+         "predicted_label": predictions, "confidence": confidences}
+    ).to_csv(results_dir / f"transformer_{args.name}_test_predictions.csv", index=False)
 
     payload = {
         "model": args.name,

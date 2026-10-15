@@ -18,25 +18,24 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import matplotlib  # noqa: E402
+import matplotlib
 
 matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt  # noqa: E402
-import pandas as pd  # noqa: E402
-import torch  # noqa: E402
-from datasets import Dataset  # noqa: E402
-from sklearn.metrics import f1_score  # noqa: E402
-from transformers import (  # noqa: E402
+import matplotlib.pyplot as plt
+import pandas as pd
+import torch
+from datasets import Dataset
+from sklearn.metrics import f1_score
+from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    DataCollatorWithPadding,
     EarlyStoppingCallback,
     Trainer,
     TrainingArguments,
 )
 
-from src.utils import load_config  # noqa: E402
+from src.utils import load_config
 
 
 def compute_class_weights(labels: list[str], counts: dict[str, int]) -> torch.Tensor:
@@ -70,13 +69,17 @@ def plot_loss_curves(log_history: list[dict], out_path: Path) -> None:
     train = [(e["epoch"], e["loss"]) for e in log_history if "loss" in e]
     evals = [(e["epoch"], e.get("eval_loss"), e.get("eval_macro_f1")) for e in log_history if "eval_loss" in e]
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-    ax1.plot(*zip(*train), label="train loss")
-    eval_epochs, eval_losses, _ = zip(*[(e, l, f) for e, l, f in evals if l is not None])
-    ax1.plot(eval_epochs, eval_losses, "o-", label="validation loss")
+    if train:
+        ax1.plot(*zip(*train), label="train loss")
+    if evals:
+        eval_epochs = [e[0] for e in evals if e[1] is not None]
+        eval_losses = [e[1] for e in evals if e[1] is not None]
+        if eval_epochs:
+            ax1.plot(eval_epochs, eval_losses, "o-", label="validation loss")
     ax1.set_xlabel("epoch")
     ax1.set_ylabel("loss")
     ax1.legend()
-    f1_points = [(e, f) for e, _, f in evals if f is not None]
+    f1_points = [(e[0], e[2]) for e in evals if e[2] is not None]
     if f1_points:
         ax2.plot(*zip(*f1_points), "o-", color="tab:green")
     ax2.set_xlabel("epoch")
@@ -95,22 +98,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=cfg["batch_size"])
     parser.add_argument("--max-length", type=int, default=cfg["max_length"])
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument(
-        "--gradient-accumulation-steps", type=int, default=cfg["gradient_accumulation_steps"]
-    )
-    parser.add_argument("--train-limit", type=int, default=None, help="smoke tests only")
-    parser.add_argument("--val-limit", type=int, default=None, help="smoke tests only")
-    parser.add_argument("--no-class-weights", action="store_true")
-    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--output-dir", type=str, default="outputs/run")
+    parser.add_argument("--train-limit", type=int, default=None)
+    parser.add_argument("--val-limit", type=int, default=None)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     cfg = load_config()
-    labels: list[str] = cfg["labels"]
-    label2id = {label: i for i, label in enumerate(labels)}
     processed = Path(cfg["paths"]["processed"])
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    torch.manual_seed(args.seed)
 
     train_df = pd.read_csv(processed / "train.csv")
     val_df = pd.read_csv(processed / "validation.csv")
@@ -119,61 +120,65 @@ def main() -> None:
     if args.val_limit:
         val_df = val_df.head(args.val_limit)
 
+    label2id = {lbl: i for i, lbl in enumerate(cfg["labels"])}
+    id2label = {i: lbl for lbl, i in label2id.items()}
+
     tokenizer = AutoTokenizer.from_pretrained(args.model)
 
-    def tokenize(batch: dict) -> dict:
-        return tokenizer(batch["text"], truncation=True, max_length=args.max_length)
+    def tokenize_fn(batch):
+        return tokenizer(
+            batch["text"],
+            max_length=args.max_length,
+            truncation=True,
+            padding="max_length",
+        )
 
-    def to_dataset(df: pd.DataFrame) -> Dataset:
-        ds = Dataset.from_pandas(df[["text", "label"]], preserve_index=False)
-        ds = ds.map(tokenize, batched=True)
-        ds = ds.map(lambda b: {"labels": [label2id[l] for l in b["label"]]}, batched=True)
-        return ds.remove_columns(["label"])
+    train_ds = Dataset.from_pandas(train_df)
+    val_ds = Dataset.from_pandas(val_df)
 
-    train_ds = to_dataset(train_df)
-    val_ds = to_dataset(val_df)
+    train_ds = train_ds.map(tokenize_fn, batched=True)
+    val_ds = val_ds.map(tokenize_fn, batched=True)
+
+    train_ds = train_ds.rename_column("label", "labels")
+    val_ds = val_ds.rename_column("label", "labels")
+
+    train_ds = train_ds.map(lambda x: {"labels": label2id[x["labels"]]})
+    val_ds = val_ds.map(lambda x: {"labels": label2id[x["labels"]]})
 
     model = AutoModelForSequenceClassification.from_pretrained(
-        args.model, num_labels=len(labels), id2label={i: l for l, i in label2id.items()}, label2id=label2id
+        args.model, num_labels=len(cfg["labels"]), id2label=id2label, label2id=label2id
     )
 
-    class_weights = None
-    if not args.no_class_weights:
-        counts = train_df["label"].value_counts().to_dict()
-        class_weights = compute_class_weights(labels, counts)
+    train_labels_mapped = train_ds["labels"]
+    counts = {i: train_labels_mapped.count(i) for i in range(len(cfg["labels"]))}
+    class_weights = compute_class_weights(cfg["labels"], {cfg["labels"][k]: v for k, v in counts.items()})
 
-    output_dir = args.output_dir
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # transformers 5 removed warmup_ratio; derive integer steps instead.
-    steps_per_epoch = -(-len(train_ds) // (args.batch_size * args.gradient_accumulation_steps))
-    warmup_steps = int(cfg["training"]["warmup_ratio"] * steps_per_epoch * args.epochs)
+    def compute_metrics(eval_pred):
+        logits, labels = eval_pred
+        preds = logits.argmax(axis=-1)
+        macro_f1 = float(f1_score(labels, preds, average="macro", zero_division=0))
+        accuracy = float((preds == labels).mean())
+        return {"macro_f1": macro_f1, "accuracy": accuracy}
 
     training_args = TrainingArguments(
         output_dir=str(output_dir),
-        num_train_epochs=args.epochs,
         learning_rate=args.lr,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        num_train_epochs=args.epochs,
         weight_decay=cfg["training"]["weight_decay"],
-        warmup_steps=warmup_steps,
-        seed=args.seed,
+        warmup_ratio=cfg["training"]["warmup_ratio"],
         eval_strategy="epoch",
         save_strategy="epoch",
-        save_total_limit=1,
         load_best_model_at_end=True,
-        metric_for_best_model="eval_macro_f1",
+        metric_for_best_model="macro_f1",
         greater_is_better=True,
+        save_total_limit=1,
+        logging_steps=10,
         fp16=torch.cuda.is_available(),
-        logging_steps=20,
-        report_to=[],
+        seed=args.seed,
+        report_to="none",
     )
-
-    def compute_metrics(eval_pred) -> dict:
-        logits, targets = eval_pred
-        preds = logits.argmax(-1)
-        return {"macro_f1": f1_score(targets, preds, average="macro", zero_division=0)}
 
     trainer = WeightedLossTrainer(
         model=model,
@@ -181,43 +186,29 @@ def main() -> None:
         train_dataset=train_ds,
         eval_dataset=val_ds,
         compute_metrics=compute_metrics,
-        data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
         class_weights=class_weights,
         callbacks=[EarlyStoppingCallback(early_stopping_patience=cfg["training"]["early_stopping_patience"])],
     )
 
-    start = time.time()
+    start_time = time.time()
     trainer.train()
-    training_seconds = time.time() - start
+    training_seconds = time.time() - start_time
 
-    best_val_f1 = max(
-        (e.get("eval_macro_f1", 0.0) for e in trainer.state.log_history if "eval_macro_f1" in e),
-        default=0.0,
-    )
+    eval_results = trainer.evaluate()
+
     plot_loss_curves(trainer.state.log_history, output_dir / "loss_curves.png")
-    trainer.save_model(str(output_dir / "best_model"))
-    tokenizer.save_pretrained(str(output_dir / "best_model"))
 
-    gpu = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
     summary = {
         "model": args.model,
         "seed": args.seed,
-        "lr": args.lr,
-        "epochs": args.epochs,
-        "batch_size": args.batch_size,
-        "max_length": args.max_length,
-        "class_weights": class_weights is not None,
-        "best_val_macro_f1": float(best_val_f1),
-        "training_seconds": round(training_seconds, 1),
-        "gpu": gpu,
-        "train_rows": len(train_ds),
-        "val_rows": len(val_ds),
-        "log_history": trainer.state.log_history,
+        "learning_rate": args.lr,
+        "epochs_trained": float(trainer.state.epoch),
+        "training_seconds": training_seconds,
+        "best_val_macro_f1": eval_results.get("eval_macro_f1"),
+        "best_val_accuracy": eval_results.get("eval_accuracy"),
     }
-    (output_dir / "run_summary.json").write_text(
-        json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
-    print(json.dumps({k: v for k, v in summary.items() if k != "log_history"}, indent=2))
+    (output_dir / "run_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":

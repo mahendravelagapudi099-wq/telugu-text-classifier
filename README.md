@@ -51,6 +51,13 @@ All models were evaluated on the held-out test split of **5,169 examples** acros
 - **Paired Bootstrap Hypothesis Test (1,000 resamples)**: IndicBERTv2 vs. TF-IDF Baseline: $\Delta = +0.0849$ ($+8.49\%$ Macro-F1 gain, $p < 0.001$).
 - **Non-Overlapping Confidence Intervals**: The 95% bootstrap confidence interval for IndicBERTv2 ($[0.7197, 0.7459]$) does not overlap with the TF-IDF baseline ($[0.6346, 0.6618]$), mathematically confirming that the transformer's superior performance is statistically significant.
 
+### 📈 Visualizations & Training Convergence
+
+| Test Set Confusion Matrix | IndicBERTv2 Training & Validation Loss Curves |
+| :---: | :---: |
+| ![Confusion Matrix](results/confusion_matrix_test.png) | ![IndicBERTv2 Loss Curves](results/loss_curves_indicbert.png) |
+| *Confusion Matrix on 5,169 Test Samples* | *Loss convergence over 3 fine-tuning epochs* |
+
 ---
 
 ## 🔍 Error Analysis & Taxonomy

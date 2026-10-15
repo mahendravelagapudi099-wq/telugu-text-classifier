@@ -28,8 +28,9 @@ Thumbs.db
 # Local non-committed directory
 local/
 
-# Agents & local tooling (skills-lock.json remains tracked)
+# Agents & local tooling
 .agents/
+skills-lock.json
 
 # Secrets & credentials
 .env
